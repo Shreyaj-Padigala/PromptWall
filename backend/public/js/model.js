@@ -150,7 +150,7 @@ function renderKnowledge(model) {
 
 function logout() {
   clearToken();
-  window.location.href = '/';
+  window.location.href = '/auth.html';
 }
 
 init();

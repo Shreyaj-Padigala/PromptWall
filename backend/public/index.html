@@ -3,67 +3,81 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PromptWall — Login</title>
+  <title>PromptWall - AI Prompt Defense</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <div class="auth-page">
-    <div class="auth-container">
-      <div class="auth-logo">
-        <span class="auth-logo-text">PromptWall</span>
+  <div class="landing-page">
+    <header class="landing-header">
+      <a href="/" class="landing-brand">PromptWall</a>
+      <div class="landing-header-actions">
+        <a href="/auth.html" class="btn btn-secondary">Sign In</a>
+        <a href="/auth.html#signup" class="btn btn-primary">Start Protecting</a>
       </div>
+    </header>
 
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
-        <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Create Account</button>
-      </div>
+    <main class="landing-main">
+      <section class="hero-section">
+        <div class="hero-copy">
+          <div class="landing-kicker">Prompt security for deployed AI</div>
+          <h1 class="hero-title">Putting your AI online without protection is like handing strangers your house keys.</h1>
+          <p class="hero-text">PromptWall is the bouncer: it scans prompts, blocks attacks, learns new tricks, and alerts you with voice.</p>
+          <p class="hero-support">The mission is to give teams a serious defensive layer between public-facing users and the models they cannot afford to let drift, leak, or get manipulated.</p>
+          <div class="hero-actions">
+            <a href="/auth.html#signup" class="btn btn-primary">Create Account</a>
+            <a href="/auth.html" class="btn btn-secondary">View Sign In</a>
+          </div>
+        </div>
 
-      <!-- Login Form -->
-      <div id="form-login">
-        <div class="auth-title">Welcome back</div>
-        <div class="auth-subtitle">Sign in to continue training your models</div>
-        <form id="login-form" onsubmit="handleLogin(event)">
-          <div class="form-group">
-            <label class="form-label">Email</label>
-            <input class="form-input" type="email" id="login-email" placeholder="you@example.com" required autocomplete="email">
+        <div class="hero-panel">
+          <div class="hero-panel-label">Why it exists</div>
+          <div class="hero-panel-quote">Exposed models attract prompt injection, jailbreak attempts, and reconnaissance. PromptWall is built to inspect, interrupt, and improve your defenses over time.</div>
+          <div class="hero-panel-grid">
+            <div class="hero-metric">
+              <span class="hero-metric-value">Scan</span>
+              <span class="hero-metric-label">Inspect prompts before they land</span>
+            </div>
+            <div class="hero-metric">
+              <span class="hero-metric-value">Block</span>
+              <span class="hero-metric-label">Stop malicious inputs early</span>
+            </div>
+            <div class="hero-metric">
+              <span class="hero-metric-value">Learn</span>
+              <span class="hero-metric-label">Adapt against new attack patterns</span>
+            </div>
+            <div class="hero-metric">
+              <span class="hero-metric-value">Alert</span>
+              <span class="hero-metric-label">Escalate issues with voice notifications</span>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Password</label>
-            <input class="form-input" type="password" id="login-password" placeholder="Your password" required autocomplete="current-password">
-          </div>
-          <div class="error-msg" id="login-error"></div>
-          <button type="submit" class="btn btn-primary btn-full" id="login-btn" style="margin-top:18px">
-            <span id="login-btn-text">Sign In</span>
-          </button>
-        </form>
-      </div>
+        </div>
+      </section>
 
-      <!-- Signup Form -->
-      <div id="form-signup" style="display:none">
-        <div class="auth-title">Get started</div>
-        <div class="auth-subtitle">Two training models are provisioned automatically</div>
-        <form id="signup-form" onsubmit="handleSignup(event)">
-          <div class="form-group">
-            <label class="form-label">Full Name</label>
-            <input class="form-input" type="text" id="signup-name" placeholder="Your name" required autocomplete="name">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Email</label>
-            <input class="form-input" type="email" id="signup-email" placeholder="you@example.com" required autocomplete="email">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Password</label>
-            <input class="form-input" type="password" id="signup-password" placeholder="Min. 8 characters" required autocomplete="new-password" minlength="8">
-          </div>
-          <div class="error-msg" id="signup-error"></div>
-          <button type="submit" class="btn btn-primary btn-full" id="signup-btn" style="margin-top:18px">
-            <span id="signup-btn-text">Create Account</span>
-          </button>
-        </form>
-      </div>
-    </div>
+      <section class="landing-section">
+        <div class="section-intro">
+          <div class="landing-kicker">Mission</div>
+          <h2 class="landing-section-title">Protect production AI with a defensive layer that behaves like security, not a demo.</h2>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card">
+            <div class="feature-title">Prompt inspection</div>
+            <p class="feature-text">Review incoming prompts for manipulation, coercion, and attack framing before they hit the model.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-title">Attack blocking</div>
+            <p class="feature-text">Catch suspicious behavior fast enough to stop bad inputs instead of explaining failures after the fact.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-title">Defensive learning</div>
+            <p class="feature-text">Strengthen pattern recognition over time so new tricks do not stay new for long.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-title">Voice alerts</div>
+            <p class="feature-text">Surface urgent events in a channel operators can hear immediately when risk spikes.</p>
+          </article>
+        </div>
+      </section>
+    </main>
   </div>
-  <script src="/js/api.js"></script>
-  <script src="/js/auth.js"></script>
 </body>
 </html>

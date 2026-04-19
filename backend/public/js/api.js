@@ -27,7 +27,7 @@ function setUser(user) {
 
 function requireAuth() {
   if (!getToken()) {
-    window.location.href = '/';
+    window.location.href = '/auth.html';
     return false;
   }
   return true;
@@ -43,7 +43,7 @@ async function apiFetch(path, options = {}) {
 
   if (res.status === 401) {
     clearToken();
-    window.location.href = '/';
+    window.location.href = '/auth.html';
     throw new Error('Unauthorized');
   }
 
