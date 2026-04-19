@@ -2,7 +2,17 @@
   "permissions": {
     "allow": [
       "Bash(node -e \"require\\('./src/app'\\)\")",
-      "Bash(node -e \"require\\('./src/app'\\); console.log\\('App loaded OK'\\)\")"
+      "Bash(node -e \"require\\('./src/app'\\); console.log\\('App loaded OK'\\)\")",
+      "Bash(npm list *)",
+      "Bash(node -e ' *)",
+      "Read(//c//**)",
+      "Bash(cd /tmp)",
+      "Bash(node)",
+      "Bash(node /c/Users/vinay/PromptWall/backend/server.js)",
+      "Bash(curl http://localhost:3000/api-docs)",
+      "Bash(pkill -f \"node.*server.js\")",
+      "Bash(awk '{print $2}')",
+      "Bash(xargs kill *)"
     ]
   }
 }
