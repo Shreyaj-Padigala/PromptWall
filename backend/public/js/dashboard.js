@@ -190,6 +190,7 @@ function scheduleNextAutoRun(result) {
       resetAutoRun('Automatic prompting stopped.');
       return;
     }
+    setRunnerState('idle');
     runAutoCycle();
   }, AUTO_RUN_DELAY_MS);
 }
