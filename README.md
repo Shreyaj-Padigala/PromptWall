@@ -111,7 +111,7 @@ Open `http://localhost:3000`
 
 ---
 
-## Environment Variables
+## Example of Environment Variables
 
 ```env
 PORT=3000
