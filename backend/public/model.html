@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PromptWall — Model Performance</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+
+    <nav class="nav">
+      <a href="/dashboard.html" class="nav-logo">
+        <div class="nav-logo-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+        </div>
+        <span class="nav-logo-text">PromptWall</span>
+      </a>
+
+      <div class="nav-section">
+        <a href="/dashboard.html" class="nav-item" id="nav-dashboard">
+          <svg class="nav-item-icon" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M2 2h5v5H2V2zm7 0h5v5H9V2zm-7 7h5v5H2V9zm7 0h5v5H9V9z"/>
+          </svg>
+          Dashboard
+        </a>
+
+        <div class="nav-label" style="margin-top:12px">Training Models</div>
+        <div id="nav-models-list">
+          <div style="padding: 6px 18px; font-size:11px; color:var(--text-2)">Loading...</div>
+        </div>
+
+        <div class="nav-divider" style="margin-top:12px"></div>
+
+        <a href="/sessions.html" class="nav-item">
+          <svg class="nav-item-icon" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M1 3h14v1H1zm0 4h14v1H1zm0 4h9v1H1z"/>
+          </svg>
+          Past Sessions
+        </a>
+      </div>
+
+      <div class="nav-bottom">
+        <div class="nav-user">
+          <div class="nav-user-avatar" id="user-avatar">?</div>
+          <div class="nav-user-name" id="user-name">Loading...</div>
+        </div>
+        <button class="nav-logout" onclick="logout()">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M10 2h4v12h-4v-1h3V3h-3V2zM6.5 10.5l1 1L11 8 7.5 4.5l-1 1L9 8 3 8v1.5h6L6.5 10.5z"/>
+          </svg>
+          Sign out
+        </button>
+      </div>
+    </nav>
+
+    <main class="main-content">
+      <a href="/dashboard.html" class="back-link">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M10 3L5 8l5 5"/></svg>
+        Back to Dashboard
+      </a>
+
+      <div class="page-header">
+        <div class="page-title" id="model-name">Loading...</div>
+        <div class="page-subtitle" id="model-desc"></div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="model-stats-row" id="stats-row">
+        <div class="model-stat-cell">
+          <div class="model-stat-big" id="stat-accuracy">—</div>
+          <div class="model-stat-label">Current Accuracy</div>
+        </div>
+        <div class="model-stat-cell">
+          <div class="model-stat-big" id="stat-prompts">—</div>
+          <div class="model-stat-label">Total Prompts</div>
+        </div>
+        <div class="model-stat-cell">
+          <div class="model-stat-big" id="stat-correct">—</div>
+          <div class="model-stat-label">Correct</div>
+        </div>
+        <div class="model-stat-cell">
+          <div class="model-stat-big" id="stat-status">—</div>
+          <div class="model-stat-label">Status</div>
+        </div>
+      </div>
+
+      <!-- Learning Curve -->
+      <div class="section-title">Learning Curve</div>
+      <div id="chart-empty" class="empty-state" style="display:none">
+        <div class="empty-state-title">No data yet</div>
+        <div class="empty-state-text">Start a training session on the Dashboard to see this model's learning curve.</div>
+      </div>
+      <div class="chart-container" id="chart-container">
+        <canvas id="performance-chart"></canvas>
+      </div>
+
+      <!-- Knowledge State -->
+      <div class="knowledge-block">
+        <div class="knowledge-title">Accumulated Training Knowledge</div>
+        <div id="knowledge-content" class="knowledge-content">
+          <span class="knowledge-empty">No training knowledge yet. The model hasn't made any mistakes to learn from.</span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/model.js"></script>
+</body>
+</html>

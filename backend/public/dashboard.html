@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PromptWall — Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+
+    <!-- Left Nav -->
+    <nav class="nav" id="main-nav">
+      <a href="/dashboard.html" class="nav-logo">
+        <div class="nav-logo-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+        </div>
+        <span class="nav-logo-text">PromptWall</span>
+      </a>
+
+      <div class="nav-section">
+        <a href="/dashboard.html" class="nav-item active" id="nav-dashboard">
+          <svg class="nav-item-icon" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M2 2h5v5H2V2zm7 0h5v5H9V2zm-7 7h5v5H2V9zm7 0h5v5H9V9z"/>
+          </svg>
+          Dashboard
+        </a>
+
+        <div class="nav-label" style="margin-top:12px">Training Models</div>
+        <div id="nav-models-list">
+          <div style="padding: 6px 18px; font-size:11px; color:var(--text-2)">Loading...</div>
+        </div>
+
+        <div class="nav-divider" style="margin-top:12px"></div>
+
+        <a href="/sessions.html" class="nav-item" id="nav-sessions">
+          <svg class="nav-item-icon" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M1 3h14v1H1zm0 4h14v1H1zm0 4h9v1H1z"/>
+          </svg>
+          Past Sessions
+        </a>
+      </div>
+
+      <div class="nav-bottom">
+        <div class="nav-user">
+          <div class="nav-user-avatar" id="user-avatar">?</div>
+          <div class="nav-user-name" id="user-name">Loading...</div>
+        </div>
+        <button class="nav-logout" onclick="logout()">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M10 2h4v12h-4v-1h3V3h-3V2zM6.5 10.5l1 1L11 8 7.5 4.5l-1 1L9 8 3 8v1.5h6L6.5 10.5z"/>
+          </svg>
+          Sign out
+        </button>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- Session Bar -->
+      <div class="session-bar">
+        <select class="form-input form-select" id="model-select" onchange="onModelChange()" style="max-width:200px">
+          <option value="">Select model...</option>
+        </select>
+        <div class="session-indicator">
+          <div class="session-dot" id="session-dot"></div>
+          <span id="session-status" class="session-status">No active session</span>
+        </div>
+        <div style="flex:1"></div>
+        <button class="btn btn-primary btn-sm" id="start-btn" onclick="startSession()">Start Session</button>
+        <button class="btn btn-danger btn-sm" id="end-btn" onclick="endSession()" style="display:none">End Session</button>
+      </div>
+
+      <div class="page-header">
+        <div class="page-title">Training Dashboard</div>
+        <div class="page-subtitle">Submit prompts to test and train your selected model's injection detection</div>
+      </div>
+
+      <!-- Prompt Input -->
+      <div class="prompt-area">
+        <div class="form-group">
+          <label class="form-label">Prompt to Analyze</label>
+          <textarea
+            class="form-input form-textarea"
+            id="prompt-input"
+            placeholder="Enter any text — the training model will classify it as safe or injection..."
+            disabled
+          ></textarea>
+        </div>
+        <div class="prompt-controls">
+          <button class="btn btn-primary" id="analyze-btn" onclick="submitPrompt()" disabled>
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm3.5 7.5l-5 3V5.5l5 3z"/>
+            </svg>
+            <span id="analyze-btn-text">Analyze</span>
+          </button>
+          <div id="analyze-loading" style="display:none" class="flex items-center gap-8">
+            <div class="spinner"></div>
+            <span style="font-size:12px;color:var(--text-2)">Processing agents...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="results-section" style="display:none">
+
+        <div class="results-grid">
+          <!-- Training Model -->
+          <div class="result-panel">
+            <div class="result-panel-header">
+              <span class="result-panel-title">Training Model</span>
+              <span class="classification-badge" id="training-badge">—</span>
+            </div>
+            <div class="result-reasoning" id="training-reasoning">—</div>
+          </div>
+          <!-- Ground Truth -->
+          <div class="result-panel">
+            <div class="result-panel-header">
+              <span class="result-panel-title">Ground Truth</span>
+              <span class="classification-badge" id="gt-badge">—</span>
+            </div>
+            <div class="result-reasoning" id="gt-reasoning">—</div>
+          </div>
+        </div>
+
+        <!-- Evaluation -->
+        <div>
+          <div class="eval-row">
+            <span class="eval-label">Verdict</span>
+            <span class="correct-badge" id="eval-verdict">—</span>
+            <span class="eval-value text-muted" id="eval-error-type" style="margin-left:8px"></span>
+          </div>
+          <div class="eval-row">
+            <span class="eval-label">Accuracy</span>
+            <span class="accuracy-value" id="current-accuracy">—%</span>
+            <span class="accuracy-meta" id="accuracy-meta" style="margin-left:10px"></span>
+          </div>
+        </div>
+
+        <!-- Agent Activity -->
+        <div style="margin-top:14px">
+          <div class="section-title">Agent Activity</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div class="agent-row" id="agent-orchestrator">
+              <div class="agent-dot"></div>
+              <span>Orchestrator</span>
+              <span class="text-muted" style="margin-left:auto;font-size:11px" id="agent-orchestrator-text">—</span>
+            </div>
+            <div class="agent-row" id="agent-learn">
+              <div class="agent-dot"></div>
+              <span>Learn Agent</span>
+              <span class="text-muted" style="margin-left:auto;font-size:11px" id="agent-learn-text">—</span>
+            </div>
+            <div class="agent-row" id="agent-knowledge">
+              <div class="agent-dot"></div>
+              <span>Training Knowledge Agent</span>
+              <span class="text-muted" style="margin-left:auto;font-size:11px" id="agent-knowledge-text">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Insight -->
+        <div id="insight-block" style="display:none">
+          <div class="insight-block">
+            <div class="insight-label">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" style="margin-right:4px">
+                <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3a1 1 0 110 2 1 1 0 010-2zm-1 4h2v4H7V8z"/>
+              </svg>
+              Learn Agent Insight
+            </div>
+            <div class="insight-text" id="insight-text">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prompt History -->
+      <div class="prompt-history" id="prompt-history" style="display:none">
+        <div class="history-header">Session History</div>
+        <div id="history-list"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>
