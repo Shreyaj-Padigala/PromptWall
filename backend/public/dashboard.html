@@ -81,10 +81,16 @@
             <select class="form-input form-select prompt-mode-select" id="prompt-mode" disabled>
               <option value="manual">Manual</option>
               <option value="review">Auto-generate then review</option>
-              <option value="auto_run">Auto-generate and analyze</option>
+              <option value="auto_run">Continuous auto-run</option>
             </select>
             <button class="btn btn-secondary" id="generate-btn" onclick="handleGenerateClick()" disabled>
-              <span id="generate-btn-text">Auto Generate</span>
+              <span id="generate-btn-text">Generate Once</span>
+            </button>
+            <button class="btn btn-primary" id="start-auto-btn" onclick="startAutoRun()" disabled>
+              Start Auto
+            </button>
+            <button class="btn btn-danger" id="stop-auto-btn" onclick="stopAutoRunFromButton()" disabled>
+              Stop Auto
             </button>
           </div>
           <textarea

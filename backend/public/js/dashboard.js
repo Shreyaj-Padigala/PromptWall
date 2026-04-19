@@ -6,9 +6,8 @@ let models = [];
 let activeSession = null;
 let promptHistory = [];
 let pendingGeneratedPrompt = null;
-let isGenerating = false;
-let isSubmitting = false;
-let autoRunEnabled = false;
+let runnerState = 'idle';
+let shouldStopAutoRun = false;
 let autoRunTimer = null;
 let autoRunCountdownTimer = null;
 
@@ -19,7 +18,8 @@ const startBtn = document.getElementById('start-btn');
 const endBtn = document.getElementById('end-btn');
 const promptModeSelect = document.getElementById('prompt-mode');
 const generateBtn = document.getElementById('generate-btn');
-const generateBtnText = document.getElementById('generate-btn-text');
+const startAutoBtn = document.getElementById('start-auto-btn');
+const stopAutoBtn = document.getElementById('stop-auto-btn');
 const autoStatus = document.getElementById('auto-status');
 const generatedMeta = document.getElementById('generated-meta');
 const generatedTargetChip = document.getElementById('generated-target-chip');
@@ -82,6 +82,18 @@ function getPromptMode() {
   return promptModeSelect.value || 'manual';
 }
 
+function isAutoRunMode() {
+  return getPromptMode() === 'auto_run';
+}
+
+function isBusy() {
+  return runnerState === 'generating' || runnerState === 'submitting';
+}
+
+function isAutoRunActive() {
+  return runnerState !== 'idle';
+}
+
 function clearAutoTimers() {
   if (autoRunTimer) {
     clearTimeout(autoRunTimer);
@@ -91,6 +103,11 @@ function clearAutoTimers() {
     clearInterval(autoRunCountdownTimer);
     autoRunCountdownTimer = null;
   }
+}
+
+function setRunnerState(nextState) {
+  runnerState = nextState;
+  updatePromptControls();
 }
 
 function setAutoStatus(text) {
@@ -112,21 +129,50 @@ function setGeneratedPromptMeta(meta) {
   generatedMeta.style.display = '';
 }
 
-function stopAutoRun(statusText = 'Auto mode idle.') {
-  autoRunEnabled = false;
+function resetAutoRun(statusText = 'Auto mode idle.') {
+  shouldStopAutoRun = false;
   clearAutoTimers();
+  setRunnerState('idle');
   setAutoStatus(statusText);
-  updatePromptControls();
+}
+
+function stopAutoRun(statusText = 'Automatic prompting stopped.') {
+  shouldStopAutoRun = true;
+
+  if (runnerState === 'waiting') {
+    clearAutoTimers();
+    setRunnerState('idle');
+    setAutoStatus(statusText);
+    return;
+  }
+
+  if (runnerState === 'generating' || runnerState === 'submitting') {
+    setRunnerState('stopping');
+    setAutoStatus('Stopping after the current request completes...');
+    return;
+  }
+
+  resetAutoRun(statusText);
+}
+
+function stopAutoRunFromButton() {
+  stopAutoRun('Automatic prompting stopped.');
 }
 
 function scheduleNextAutoRun(result) {
-  if (!autoRunEnabled || !activeSession || getPromptMode() !== 'auto_run') return;
+  if (!isAutoRunMode() || shouldStopAutoRun || !activeSession) {
+    resetAutoRun('Automatic prompting stopped.');
+    return;
+  }
+
+  clearAutoTimers();
+  setRunnerState('waiting');
 
   const expected = result.ground_truth.classification;
   const actual = result.training_response.classification;
   let remainingSeconds = AUTO_RUN_DELAY_MS / 1000;
 
-  setAutoStatus(`Observed result: expected ${expected}, model predicted ${actual}. Next automatic prompt in ${remainingSeconds}s.`);
+  setAutoStatus(`Observed result: expected ${expected}, model predicted ${actual}. Next prompt in ${remainingSeconds}s.`);
 
   autoRunCountdownTimer = setInterval(() => {
     remainingSeconds -= 1;
@@ -135,35 +181,48 @@ function scheduleNextAutoRun(result) {
       autoRunCountdownTimer = null;
       return;
     }
-    setAutoStatus(`Observed result: expected ${expected}, model predicted ${actual}. Next automatic prompt in ${remainingSeconds}s.`);
+    setAutoStatus(`Observed result: expected ${expected}, model predicted ${actual}. Next prompt in ${remainingSeconds}s.`);
   }, 1000);
 
   autoRunTimer = setTimeout(() => {
     autoRunTimer = null;
-    if (!autoRunEnabled || !activeSession || getPromptMode() !== 'auto_run') return;
-    generatePrompt({ autoSubmit: true });
+    if (shouldStopAutoRun || !activeSession || !isAutoRunMode()) {
+      resetAutoRun('Automatic prompting stopped.');
+      return;
+    }
+    runAutoCycle();
   }, AUTO_RUN_DELAY_MS);
 }
 
 function updatePromptControls() {
   const hasSession = Boolean(activeSession);
+  const autoMode = isAutoRunMode();
+  const autoActive = isAutoRunActive();
+  const busy = isBusy();
   const hasPromptText = promptInput.value.trim().length > 0;
-  const autoRunning = autoRunEnabled && getPromptMode() === 'auto_run';
 
-  startBtn.disabled = isGenerating || isSubmitting;
-  endBtn.disabled = !hasSession || isGenerating || isSubmitting;
-  promptModeSelect.disabled = !hasSession || autoRunning || isGenerating || isSubmitting;
-  promptInput.disabled = !hasSession || autoRunning || isGenerating || isSubmitting;
-  analyzeBtn.disabled = !hasSession || !hasPromptText || autoRunning || isGenerating || isSubmitting;
-  generateBtn.disabled = !hasSession || ((isGenerating || isSubmitting) && !autoRunning);
-  generateBtnText.textContent = autoRunning ? 'Stop Auto' : 'Auto Generate';
+  startBtn.disabled = busy || runnerState === 'waiting' || runnerState === 'stopping';
+  endBtn.disabled = !hasSession || busy;
+  promptModeSelect.disabled = !hasSession || autoActive;
+  promptInput.disabled = !hasSession || autoActive || busy;
+  analyzeBtn.disabled = !hasSession || !hasPromptText || autoActive || busy;
+  generateBtn.disabled = !hasSession || autoMode || autoActive || busy;
+  startAutoBtn.disabled = !hasSession || !autoMode || autoActive || busy;
+  stopAutoBtn.disabled = !hasSession || !autoActive;
 
-  if (!hasSession) {
+  if (!hasSession && runnerState === 'idle') {
     setAutoStatus('Auto mode idle.');
-  } else if (!autoRunning && !isGenerating && !isSubmitting && getPromptMode() === 'manual') {
-    setAutoStatus('Manual mode active.');
-  } else if (!autoRunning && !isGenerating && !isSubmitting && getPromptMode() === 'review') {
-    setAutoStatus('Review mode active. Generate a prompt, inspect it, then analyze.');
+    return;
+  }
+
+  if (runnerState === 'idle') {
+    if (autoMode) {
+      setAutoStatus('Continuous auto-run ready. Press Start Auto to begin adding a new prompt every 5 seconds.');
+    } else if (getPromptMode() === 'review') {
+      setAutoStatus('Review mode active. Generate one prompt, inspect it, then analyze.');
+    } else {
+      setAutoStatus('Manual mode active.');
+    }
   }
 }
 
@@ -176,7 +235,7 @@ function setSessionActive(active, sessionId) {
     endBtn.style.display = '';
     document.getElementById('prompt-history').style.display = '';
   } else {
-    stopAutoRun('Auto mode idle.');
+    resetAutoRun('Auto mode idle.');
     sessionDot.classList.remove('active');
     sessionStatus.textContent = 'No active session';
     sessionStatus.classList.remove('active-text');
@@ -251,11 +310,10 @@ async function endSession() {
 }
 
 async function generatePrompt({ autoSubmit = false } = {}) {
-  if (!activeSession || isGenerating || isSubmitting) return;
+  if (!activeSession || isBusy() || runnerState === 'waiting') return;
 
-  isGenerating = true;
-  updatePromptControls();
-  setAutoStatus(autoSubmit ? 'Generating and submitting the next automatic prompt...' : 'Generating prompt from recent model weaknesses...');
+  setRunnerState('generating');
+  setAutoStatus(autoSubmit ? 'Generating the next automatic prompt...' : 'Generating prompt from recent model weaknesses...');
 
   try {
     const generated = await api.prompts.generate({ session_id: activeSession.id });
@@ -266,34 +324,28 @@ async function generatePrompt({ autoSubmit = false } = {}) {
     });
 
     if (autoSubmit) {
-      isGenerating = false;
-      updatePromptControls();
-      await submitPrompt({ sourceOverride: 'auto_generated' });
-    } else {
-      updatePromptControls();
-      setAutoStatus('Generated prompt ready for review.');
-      promptInput.focus();
+      await submitPrompt({ sourceOverride: 'auto_generated', fromAutoRun: true });
+      return;
     }
+
+    setRunnerState('idle');
+    setAutoStatus('Generated prompt ready for review.');
+    promptInput.focus();
   } catch (err) {
-    stopAutoRun('Automatic prompting stopped after a generation error.');
+    resetAutoRun('Automatic prompting stopped after a generation error.');
     alert('Error: ' + err.message);
-  } finally {
-    if (isGenerating) {
-      isGenerating = false;
-      updatePromptControls();
-    }
   }
 }
 
-async function submitPrompt({ sourceOverride } = {}) {
+async function submitPrompt({ sourceOverride, fromAutoRun = false } = {}) {
   const text = promptInput.value.trim();
-  if (!text || !activeSession || isSubmitting || isGenerating) return;
+  if (!text || !activeSession) return;
+  if (!fromAutoRun && (isBusy() || runnerState === 'waiting')) return;
 
   clearAutoTimers();
-  isSubmitting = true;
+  setRunnerState('submitting');
   analyzeBtn.style.display = 'none';
   analyzeLoading.style.display = 'flex';
-  updatePromptControls();
 
   const generatedMatch = pendingGeneratedPrompt && pendingGeneratedPrompt.prompt_text === text;
   const promptSource = sourceOverride || (generatedMatch ? 'auto_generated' : 'manual');
@@ -322,21 +374,43 @@ async function submitPrompt({ sourceOverride } = {}) {
     promptInput.value = '';
     setGeneratedPromptMeta(null);
 
-    if (autoRunEnabled && getPromptMode() === 'auto_run') {
-      scheduleNextAutoRun(result);
+    if (fromAutoRun) {
+      if (shouldStopAutoRun || !isAutoRunMode()) {
+        resetAutoRun('Automatic prompting stopped.');
+      } else {
+        scheduleNextAutoRun(result);
+      }
     } else {
+      setRunnerState('idle');
       setAutoStatus('Prompt analyzed. Review the expected vs actual classifications above.');
     }
   } catch (err) {
-    stopAutoRun('Automatic prompting stopped after a submission error.');
+    resetAutoRun('Automatic prompting stopped after a submission error.');
     alert('Error: ' + err.message);
   } finally {
-    isSubmitting = false;
     analyzeBtn.style.display = '';
     analyzeLoading.style.display = 'none';
+    if (!fromAutoRun && runnerState === 'submitting') {
+      setRunnerState('idle');
+    }
     updatePromptControls();
     promptInput.focus();
   }
+}
+
+async function runAutoCycle() {
+  if (!activeSession || shouldStopAutoRun || !isAutoRunMode()) {
+    resetAutoRun('Automatic prompting stopped.');
+    return;
+  }
+
+  await generatePrompt({ autoSubmit: true });
+}
+
+function startAutoRun() {
+  if (!activeSession || !isAutoRunMode() || isAutoRunActive() || isBusy()) return;
+  shouldStopAutoRun = false;
+  runAutoCycle();
 }
 
 function renderResult(r) {
@@ -416,29 +490,15 @@ function renderHistory() {
 }
 
 function handleGenerateClick() {
-  if (!activeSession) return;
-
-  if (getPromptMode() === 'auto_run') {
-    if (autoRunEnabled) {
-      stopAutoRun('Automatic prompting stopped.');
-      return;
-    }
-
-    autoRunEnabled = true;
-    updatePromptControls();
-    generatePrompt({ autoSubmit: true });
-    return;
-  }
-
+  if (!activeSession || isAutoRunMode()) return;
   generatePrompt();
 }
 
 function handlePromptModeChange() {
-  if (autoRunEnabled && getPromptMode() !== 'auto_run') {
+  if (isAutoRunActive()) {
     stopAutoRun('Automatic prompting stopped.');
-  } else {
-    updatePromptControls();
   }
+  updatePromptControls();
 }
 
 function escapeHtml(str) {
@@ -446,7 +506,7 @@ function escapeHtml(str) {
 }
 
 function logout() {
-  stopAutoRun('Auto mode idle.');
+  resetAutoRun('Auto mode idle.');
   clearToken();
   window.location.href = '/';
 }

@@ -497,6 +497,7 @@ html, body {
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 
 .prompt-mode-select {
@@ -540,6 +541,11 @@ html, body {
 .generated-reasoning {
   font-size: 12px;
   color: var(--text-1);
+}
+
+#start-auto-btn:disabled,
+#stop-auto-btn:disabled {
+  opacity: 0.4;
 }
 
 /* ─── Results ────────────────────────────────────── */
