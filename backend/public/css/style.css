@@ -1138,7 +1138,7 @@ html, body {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
   gap: 28px;
-  align-items: stretch;
+  align-items: start;
 }
 
 .landing-kicker {
@@ -1150,16 +1150,8 @@ html, body {
   margin-bottom: 18px;
 }
 
-.hero-copy,
-.hero-panel,
-.feature-card {
-  background: rgba(17, 17, 17, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
-}
-
 .hero-copy {
-  padding: 44px;
+  padding: 18px 0 0;
 }
 
 .hero-title {
@@ -1192,7 +1184,8 @@ html, body {
 }
 
 .hero-panel {
-  padding: 28px;
+  padding: 14px 0 0 32px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .hero-panel-label {
@@ -1211,35 +1204,36 @@ html, body {
   margin-bottom: 24px;
 }
 
-.hero-panel-grid {
+.hero-capability-list {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.hero-capability {
+  display: grid;
+  grid-template-columns: 72px 1fr;
   gap: 12px;
+  align-items: start;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.hero-metric {
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.hero-metric-value {
-  display: block;
-  font-size: 22px;
+.hero-capability-name {
+  font-size: 16px;
   font-weight: 700;
   color: var(--accent);
-  margin-bottom: 6px;
 }
 
-.hero-metric-label {
-  display: block;
-  font-size: 13px;
+.hero-capability-text {
+  font-size: 14px;
   color: var(--text-1);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .landing-section {
-  margin-top: 28px;
+  margin-top: 56px;
+  padding-top: 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .section-intro {
@@ -1256,11 +1250,12 @@ html, body {
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  gap: 24px;
 }
 
-.feature-card {
-  padding: 22px;
+.feature-item {
+  padding-top: 14px;
+  border-top: 2px solid rgba(224, 90, 28, 0.45);
 }
 
 .feature-title {
@@ -1289,6 +1284,12 @@ html, body {
   .feature-grid {
     grid-template-columns: 1fr;
   }
+
+  .hero-panel {
+    padding: 8px 0 0;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
 }
 
 @media (max-width: 640px) {
@@ -1307,17 +1308,12 @@ html, body {
     flex: 1;
   }
 
-  .hero-copy,
-  .hero-panel,
-  .feature-card {
-    padding: 20px;
-  }
-
-  .hero-panel-grid {
-    grid-template-columns: 1fr;
-  }
-
   .hero-text {
     font-size: 18px;
+  }
+
+  .hero-capability {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 }

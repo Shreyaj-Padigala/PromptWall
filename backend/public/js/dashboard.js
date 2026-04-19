@@ -239,7 +239,7 @@ function escapeHtml(str) {
 
 function logout() {
   clearToken();
-  window.location.href = '/auth.html';
+  window.location.href = '/';
 }
 
 promptInput.addEventListener('keydown', (e) => {
