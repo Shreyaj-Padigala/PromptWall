@@ -31,21 +31,70 @@ function buildClassificationInput(promptText, { includeHints = true } = {}) {
 }
 
 function parseJsonResponse(content) {
+  const text = typeof content === 'string' ? content.trim() : String(content || '').trim();
+
   try {
-    return JSON.parse(content);
+    return JSON.parse(text);
   } catch {}
 
-  const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+  const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (jsonMatch) {
-    try { return JSON.parse(jsonMatch[1].trim()); } catch {}
+    try { return JSON.parse(stripTrailingCommas(jsonMatch[1].trim())); } catch {}
   }
 
-  const objMatch = content.match(/\{[\s\S]*\}/);
-  if (objMatch) {
-    try { return JSON.parse(objMatch[0]); } catch {}
+  const extractedObject = extractFirstJsonObject(text);
+  if (extractedObject) {
+    try { return JSON.parse(stripTrailingCommas(extractedObject)); } catch {}
   }
 
+  console.error('Raw Groq response:', text);
   throw new Error('Could not parse JSON from Groq response');
+}
+
+function stripTrailingCommas(text) {
+  return text.replace(/,\s*([}\]])/g, '$1');
+}
+
+function extractFirstJsonObject(text) {
+  const start = text.indexOf('{');
+  if (start === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < text.length; i += 1) {
+    const char = text[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (char === '{') depth += 1;
+    if (char === '}') depth -= 1;
+
+    if (depth === 0) {
+      return text.slice(start, i + 1);
+    }
+  }
+
+  return null;
 }
 
 function normalizeGeneratedPrompt(response) {

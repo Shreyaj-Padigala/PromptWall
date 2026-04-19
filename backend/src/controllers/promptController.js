@@ -191,10 +191,16 @@ async function generateNextPrompt(req, res) {
     return res.status(400).json({ error: 'session_id is required' });
   }
 
-  const client = await db.connect();
   try {
-    await ensurePromptMetadataColumns(client);
-    const session = await getActiveSession(client, session_id, req.user.id);
+    await ensurePromptMetadataColumns();
+    const sessionResult = await db.query(
+      `SELECT ts.*, tl.base_model
+       FROM training_sessions ts
+       JOIN training_llms tl ON ts.training_llm_id = tl.id
+       WHERE ts.id = $1 AND ts.user_id = $2 AND ts.is_active = true`,
+      [session_id, req.user.id]
+    );
+    const session = sessionResult.rows[0];
     if (!session) {
       return res.status(404).json({ error: 'Active session not found' });
     }
@@ -202,11 +208,11 @@ async function generateNextPrompt(req, res) {
     const trainingLlmId = session.training_llm_id;
 
     const [knowledgeResult, insightsResult, recentPromptsResult, errorDistributionResult] = await Promise.all([
-      client.query(
+      db.query(
         'SELECT knowledge_summary FROM training_knowledge WHERE training_llm_id = $1',
         [trainingLlmId]
       ),
-      client.query(
+      db.query(
         `SELECT li.key_takeaway
          FROM learning_insights li
          JOIN prompts p ON li.prompt_id = p.id
@@ -216,7 +222,7 @@ async function generateNextPrompt(req, res) {
          LIMIT 8`,
         [trainingLlmId]
       ),
-      client.query(
+      db.query(
         `SELECT p.text, p.source, p.ground_truth_label, e.error_type, e.is_correct
          FROM prompts p
          LEFT JOIN evaluations e ON e.prompt_id = p.id
@@ -226,7 +232,7 @@ async function generateNextPrompt(req, res) {
          LIMIT 8`,
         [trainingLlmId]
       ),
-      client.query(
+      db.query(
         `SELECT
           COUNT(*) FILTER (WHERE e.error_type = 'false_positive') AS false_positive,
           COUNT(*) FILTER (WHERE e.error_type = 'false_negative') AS false_negative,
@@ -252,8 +258,6 @@ async function generateNextPrompt(req, res) {
   } catch (err) {
     console.error('Generate prompt error:', err.message);
     res.status(500).json({ error: 'Failed to generate prompt. Check your Groq API key and model availability.' });
-  } finally {
-    client.release();
   }
 }
 
