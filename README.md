@@ -113,6 +113,8 @@ Open `http://localhost:3000`
 
 ## Example of Environment Variables
 
+**Local development** — use individual Postgres vars:
+
 ```env
 PORT=3000
 PGUSER=postgres
@@ -127,6 +129,28 @@ TRAINING_MODEL=llama-3.1-8b-instant
 GROUND_TRUTH_MODEL=llama-3.3-70b-versatile
 AGENT_MODEL=llama-3.3-70b-versatile
 ```
+
+**Render / production** — use `DATABASE_URL` instead of the individual `PG*` vars:
+
+```env
+DATABASE_URL=postgresql://user:password@host:5432/promptwall
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=7d
+GROQ_API_KEY=your_groq_api_key
+TRAINING_MODEL=llama-3.1-8b-instant
+GROUND_TRUTH_MODEL=llama-3.3-70b-versatile
+AGENT_MODEL=llama-3.3-70b-versatile
+```
+
+When `DATABASE_URL` is set it takes priority over the individual `PG*` variables.
+
+---
+
+## Deploying to Render
+
+1. Create a **Render Postgres** database and link it to your web service — Render auto-sets `DATABASE_URL`
+2. Add `GROQ_API_KEY`, `JWT_SECRET`, and any model overrides in the Render environment dashboard
+3. Set **Root Directory** to `backend` and **Start Command** to `node src/server.js`
 
 ---
 
