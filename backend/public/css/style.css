@@ -492,10 +492,54 @@ html, body {
   margin-bottom: 10px;
 }
 
+.prompt-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.prompt-mode-select {
+  max-width: 280px;
+}
+
 .prompt-controls {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.auto-status {
+  font-size: 12px;
+  color: var(--text-2);
+  margin: -2px 0 10px;
+}
+
+.generated-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.generated-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(224, 90, 28, 0.1);
+  border: 1px solid rgba(224, 90, 28, 0.18);
+  border-radius: 999px;
+  padding: 3px 8px;
+}
+
+.generated-reasoning {
+  font-size: 12px;
+  color: var(--text-1);
 }
 
 /* ─── Results ────────────────────────────────────── */
@@ -1289,6 +1333,15 @@ html, body {
     padding: 8px 0 0;
     border-left: none;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .prompt-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .prompt-mode-select {
+    max-width: none;
   }
 }
 

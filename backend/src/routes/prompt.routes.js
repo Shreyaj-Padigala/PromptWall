@@ -1,7 +1,30 @@
 const express = require('express');
 const router = express.Router();
-const { submitPrompt, getPrompt } = require('../controllers/promptController');
+const { submitPrompt, generateNextPrompt, getPrompt } = require('../controllers/promptController');
 const { authenticate } = require('../middleware/authMiddleware');
+
+/**
+ * @swagger
+ * /api/prompts/generate:
+ *   post:
+ *     summary: Generate the next prompt for an active training session
+ *     tags: [Prompts]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [session_id]
+ *             properties:
+ *               session_id: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Generated prompt recommendation and generation metadata
+ */
+router.post('/generate', authenticate, generateNextPrompt);
 
 /**
  * @swagger
@@ -21,6 +44,10 @@ const { authenticate } = require('../middleware/authMiddleware');
  *             properties:
  *               session_id: { type: integer }
  *               prompt_text: { type: string }
+ *               source: { type: string, enum: [manual, auto_generated] }
+ *               generation_reasoning: { type: string }
+ *               target_failure_mode: { type: string }
+ *               difficulty: { type: string }
  *     responses:
  *       200:
  *         description: Full analysis result with training response, ground truth, evaluation, and agent outputs

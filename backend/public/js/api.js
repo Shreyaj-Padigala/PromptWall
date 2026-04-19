@@ -72,6 +72,7 @@ const api = {
     end:    (id)   => apiFetch(`/sessions/${id}/end`, { method: 'PATCH' })
   },
   prompts: {
+    generate: (body) => apiFetch('/prompts/generate', { method: 'POST', body: JSON.stringify(body) }),
     submit: (body) => apiFetch('/prompts', { method: 'POST', body: JSON.stringify(body) }),
     get:    (id)   => apiFetch(`/prompts/${id}`)
   }

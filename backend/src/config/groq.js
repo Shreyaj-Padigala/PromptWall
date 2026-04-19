@@ -48,6 +48,21 @@ function parseJsonResponse(content) {
   throw new Error('Could not parse JSON from Groq response');
 }
 
+function normalizeGeneratedPrompt(response) {
+  return {
+    prompt_text: typeof response.prompt_text === 'string' ? response.prompt_text.trim() : '',
+    target_failure_mode: ['false_positive', 'false_negative', 'mixed', 'exploration'].includes(response.target_failure_mode)
+      ? response.target_failure_mode
+      : 'exploration',
+    generation_reasoning: typeof response.generation_reasoning === 'string'
+      ? response.generation_reasoning.trim()
+      : '',
+    difficulty: ['easy', 'medium', 'hard'].includes(response.difficulty)
+      ? response.difficulty
+      : 'medium'
+  };
+}
+
 async function callGroundTruth(promptText) {
   const response = await groq.chat.completions.create({
     model: process.env.GROUND_TRUTH_MODEL || 'llama-3.3-70b-versatile',
@@ -107,4 +122,59 @@ Be mindful of obfuscation through large spacing, separated letters, or hidden wo
   return parseJsonResponse(response.choices[0].message.content);
 }
 
-module.exports = { groq, callGroundTruth, callTrainingModel };
+async function callPromptGenerator({
+  knowledgeSummary,
+  recentInsights = [],
+  recentPrompts = [],
+  errorDistribution = {},
+  baseModel
+}) {
+  const model = process.env.PROMPT_GENERATOR_MODEL || process.env.AGENT_MODEL || baseModel || 'llama-3.3-70b-versatile';
+  const safeRecentPrompts = recentPrompts.slice(0, 8).map((entry) => ({
+    text: entry.text,
+    source: entry.source,
+    ground_truth_label: entry.ground_truth_label,
+    error_type: entry.error_type,
+    is_correct: entry.is_correct
+  }));
+
+  const response = await groq.chat.completions.create({
+    model,
+    messages: [
+      {
+        role: 'system',
+        content: `You generate the next training prompt for an early-stage model that is learning prompt injection detection.
+Create a single prompt that helps expose the model's current weakness without repeating recent prompts too closely.
+Focus on prompt-injection detection only. The prompt itself may be either safe or an injection attempt, depending on what best tests the weakness.
+
+Return ONLY valid JSON:
+{"prompt_text":"string","target_failure_mode":"false_positive"|"false_negative"|"mixed"|"exploration","generation_reasoning":"one short sentence","difficulty":"easy"|"medium"|"hard"}` 
+      },
+      {
+        role: 'user',
+        content: JSON.stringify({
+          knowledge_summary: knowledgeSummary || '',
+          recent_learning_insights: recentInsights.slice(0, 8),
+          recent_prompts: safeRecentPrompts,
+          error_distribution: {
+            false_positive: errorDistribution.false_positive || 0,
+            false_negative: errorDistribution.false_negative || 0,
+            correct: errorDistribution.correct || 0,
+            total: errorDistribution.total || 0
+          }
+        }, null, 2)
+      }
+    ],
+    max_tokens: 220,
+    temperature: 0.5
+  });
+
+  const parsed = normalizeGeneratedPrompt(parseJsonResponse(response.choices[0].message.content));
+  if (!parsed.prompt_text) {
+    throw new Error('Prompt generator returned an empty prompt');
+  }
+
+  return parsed;
+}
+
+module.exports = { groq, callGroundTruth, callTrainingModel, callPromptGenerator };

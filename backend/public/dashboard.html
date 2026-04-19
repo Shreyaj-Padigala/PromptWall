@@ -77,12 +77,29 @@
       <div class="prompt-area">
         <div class="form-group">
           <label class="form-label">Prompt to Analyze</label>
+          <div class="prompt-toolbar">
+            <select class="form-input form-select prompt-mode-select" id="prompt-mode" disabled>
+              <option value="manual">Manual</option>
+              <option value="review">Auto-generate then review</option>
+              <option value="auto_run">Auto-generate and analyze</option>
+            </select>
+            <button class="btn btn-secondary" id="generate-btn" onclick="handleGenerateClick()" disabled>
+              <span id="generate-btn-text">Auto Generate</span>
+            </button>
+          </div>
           <textarea
             class="form-input form-textarea"
             id="prompt-input"
             placeholder="Enter any text — the training model will classify it as safe or injection..."
             disabled
           ></textarea>
+        </div>
+        <div class="auto-status" id="auto-status">Auto mode idle.</div>
+        <div class="generated-meta" id="generated-meta" style="display:none">
+          <span class="generated-chip" id="generated-source-chip">AI-generated</span>
+          <span class="generated-chip" id="generated-target-chip">exploration</span>
+          <span class="generated-chip" id="generated-difficulty-chip">medium</span>
+          <span class="generated-reasoning" id="generated-reasoning"></span>
         </div>
         <div class="prompt-controls">
           <button class="btn btn-primary" id="analyze-btn" onclick="submitPrompt()" disabled>

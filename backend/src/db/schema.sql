@@ -33,6 +33,10 @@ CREATE TABLE IF NOT EXISTS prompts (
   session_id INTEGER REFERENCES training_sessions(id) ON DELETE CASCADE,
   text TEXT NOT NULL,
   ground_truth_label VARCHAR(50) NOT NULL,
+  source VARCHAR(50) NOT NULL DEFAULT 'manual',
+  generation_reasoning TEXT,
+  target_failure_mode VARCHAR(50),
+  generation_difficulty VARCHAR(20),
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -92,3 +96,8 @@ CREATE TABLE IF NOT EXISTS performance_tracking (
   correct_count INTEGER NOT NULL,
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+ALTER TABLE prompts ADD COLUMN IF NOT EXISTS source VARCHAR(50) NOT NULL DEFAULT 'manual';
+ALTER TABLE prompts ADD COLUMN IF NOT EXISTS generation_reasoning TEXT;
+ALTER TABLE prompts ADD COLUMN IF NOT EXISTS target_failure_mode VARCHAR(50);
+ALTER TABLE prompts ADD COLUMN IF NOT EXISTS generation_difficulty VARCHAR(20);
