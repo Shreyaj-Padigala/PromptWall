@@ -9,6 +9,10 @@ function switchTab(tab) {
   document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
 }
 
+if (window.location.hash === '#signup') {
+  switchTab('signup');
+}
+
 function setLoading(btnId, textId, loading, text) {
   const btn = document.getElementById(btnId);
   const span = document.getElementById(textId);
