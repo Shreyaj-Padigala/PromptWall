@@ -138,6 +138,11 @@ function getPromptGenerationStage(knowledgeSummary, errorDistribution) {
   };
 }
 
+function getPromptGeneratorMaxTokens(errorDistribution) {
+  const total = Number(errorDistribution.total || 0);
+  return Math.min(320, 220 + (total * 8));
+}
+
 async function callGroundTruth(promptText) {
   const response = await groq.chat.completions.create({
     model: process.env.GROUND_TRUTH_MODEL || 'llama-3.3-70b-versatile',
@@ -205,6 +210,7 @@ async function callPromptGenerator({
 }) {
   const model = process.env.PROMPT_GENERATOR_MODEL || process.env.AGENT_MODEL || baseModel || 'llama-3.3-70b-versatile';
   const generationStage = getPromptGenerationStage(knowledgeSummary, errorDistribution);
+  const generatorMaxTokens = getPromptGeneratorMaxTokens(errorDistribution);
   const safeRecentPrompts = recentPrompts.slice(0, 8).map((entry) => ({
     text: entry.text,
     source: entry.source,
@@ -221,6 +227,8 @@ async function callPromptGenerator({
         content: `You generate the next training prompt for an early-stage model that is learning prompt injection detection.
 Create a single prompt that helps expose the model's current weakness without repeating recent prompts too closely.
 Focus on prompt-injection detection only. The prompt itself may be either safe or an injection attempt, depending on what best tests the weakness.
+Keep prompt_text to exactly one sentence whenever possible, and keep it concise, ideally under 35 words and never over 45 words.
+Avoid long setup, disclaimers, backstory, or multi-clause paragraphs.
 Current curriculum target: ${generationStage.guidance}
 Prefer ${generationStage.difficulty} difficulty unless the recent mistakes strongly justify a different level.
 
@@ -239,12 +247,17 @@ Return ONLY valid JSON:
             correct: errorDistribution.correct || 0,
             total: errorDistribution.total || 0
           },
-          target_curriculum_difficulty: generationStage.difficulty
+          target_curriculum_difficulty: generationStage.difficulty,
+          prompt_text_constraints: {
+            sentence_count: 1,
+            ideal_max_words: 35,
+            hard_max_words: 45
+          }
         }, null, 2)
       }
     ],
-    max_tokens: 220,
-    temperature: 0.5
+    max_tokens: generatorMaxTokens,
+    temperature: 0.35
   });
 
   const parsed = normalizeGeneratedPrompt(parseJsonResponse(response.choices[0].message.content));

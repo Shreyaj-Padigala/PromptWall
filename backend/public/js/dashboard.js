@@ -1,6 +1,6 @@
 if (!requireAuth()) throw new Error('Not authenticated');
 
-const AUTO_RUN_DELAY_MS = 5000;
+const AUTO_RUN_DELAY_MS = 6000;
 
 let models = [];
 let activeSession = null;
